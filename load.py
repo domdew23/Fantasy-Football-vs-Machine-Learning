@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd 
+import os
 import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
@@ -9,6 +10,9 @@ from bs4 import BeautifulSoup
 from sklearn.preprocessing import Normalizer
 from sklearn.neural_network import MLPRegressor
 from sklearn.svm import LinearSVR, SVR, NuSVR
+from rauth import OAuth1Service
+import http.client, urllib.request, urllib.parse, urllib.error, base64
+import re
 
 def print_scores(model, model_type=''):
 	train_score = model.score(X_train, y_train)
@@ -61,75 +65,11 @@ def spider(url, file):
 	fw.close()
 
 
-def grab_data():
-	url = 'https://fantasydata.com/nfl-stats/nfl-fantasy-football-stats.aspx?fs=4&stype=0&sn=3&scope=0&w=0&ew=0&s=&t=0&p=2&st=FantasyPointsYahoo&d=1&ls=FantasyPointsYahoo&live=false&pid=false&minsnaps=4'
-	output_file = 'qb_points_2014.csv'
-	spider(url, output_file)
-
-def load_test(qb_file, team_off_file):
-	qb_points = pd.read_csv(qb_file)
-	team_off = pd.read_csv(team_off_file)
-
-	targets = qb_points['Fantasy Points']
-
-	qb_points = qb_points.drop('Fantasy Points', axis=1)
-	qb_points = pd.merge(qb_points, team_off, on='Team')
-	qb_points = qb_points.drop('Rk', axis=1)
-	qb_points = qb_points.drop('Pos', axis=1)
-	qb_points = qb_points.drop('PPG',axis=1)
-	qb_points = qb_points.drop('Team', axis=1)
-
-	names = qb_points.ix[1]
-
-	qb_points = qb_points.drop('Player', axis=1)
-	#qb_points.to_csv('test_data.csv', sep=',')
-
-	return qb_points, np.array(targets), names
-
-
-def load_data(prev_year_file, next_year_file, team_off_file):
-	prev_year = pd.read_csv(prev_year_file, header=0)
-	next_year = pd.read_csv(next_year_file, header=0)
-	team_off = pd.read_csv(team_off_file, header=0)
-
-	names = prev_year.ix[:,0]
-
-	col_list = ['Player', 'Fantasy Points']
-	next_year = next_year[col_list]
-
-	prev_year = prev_year.drop('Fantasy Points', axis=1)
-	prev_year = pd.merge(prev_year, team_off, on='Team')
-	prev_year = pd.merge(prev_year, next_year, on='Player')
-	#prev_year.to_csv('data.csv', sep=',')
-
-	prev_year = prev_year.drop('Rk', axis=1)
-	prev_year = prev_year.drop('Pos', axis=1)
-	prev_year = prev_year.drop('PPG',axis=1)
-	prev_year = prev_year.drop('Team', axis=1)
-
-	prev_year = prev_year.drop('Player', axis=1)
-
-	targets = prev_year.ix[:,-1]
-	#print("{}".format(prev_year))
-	prev_year = prev_year.drop('Fantasy Points', axis=1)
-
-	features = list(prev_year.columns.values)
-	#del features[0]
-
-	#data = prev_year._get_numeric_data()
-	#print("{}".format(prev_year))
-	#data = prev_year.as_matrix()
-
-	return names, features, prev_year, np.array(targets)
-
-
-def print_info():
-	print("Targets: ".format(y))
-	print("Y train:{}".format(y_train))
-	print("Y test:{}".format(y_test))
-	print("X train:{}".format(X_train))
-	print("X test:{}".format(X_test))	
-	print("Features: {}".format(features))
+def grab_data(url, output_file):
+	if os.path.isfile(output_file):
+		print("Url already crawled || File already exists")
+	else:
+		spider(url, output_file)
 
 
 def scores():
@@ -144,22 +84,6 @@ def scores():
 	print_scores(lin_svr,'LinSVR')
 	print_scores(nu_svr,'NuSVR')
 
-def predict():
-	matt = np.array([16, 415, 628, 66, 4694, 8, 28, 14, 94, 29, 145, 5, 0, -0.073, 10, -0.154, 28, 0.028, 23, -0.154, 25, -0.033, 0.09, -0.144, 0.05, 10, 0.037, 29
-]).reshape(1, -1)
-	# matt ryan's 2014 stats
-	#matt = np.array([16, 415, 628, 66, 4694, 8, 28, 14, 94, 29, 145, 5, 0]).reshape(1, -1)
-	print("Matt 2015 LR Prediction: {}".format(lr.predict(matt)))
-	print("Matt 2015 Ridge Prediction: {}".format(ridge.predict(matt)))
-	print("Matt 2015 Ridge10 Prediction: {}".format(ridge10.predict(matt)))
-	print("Matt 2015 Ridge01 Prediction: {}".format(ridge01.predict(matt)))
-	print("Matt 2015 Lasso Prediction: {}".format(lasso.predict(matt)))
-	print("Matt 2015 Lasso 001 Prediction: {}".format(lasso001.predict(matt)))
-	print("Matt 2015 Lasso 00001 Prediction: {}".format(lasso00001.predict(matt)))
-	print("Matt 2015 SVR Prediction: {}".format(svr.predict(matt)))
-	print("Matt 2015 LinSVR 001 Prediction: {}".format(lin_svr.predict(matt)))
-	print("Matt 2015 NuSVR 00001 Prediction: {}".format(nu_svr.predict(matt)))
-	print("Matt 2015 Actual: 247.94")
 
 
 def make_models(X_train, y_train):
@@ -212,16 +136,106 @@ def get_raw(file):
 	return df
 #write_file('qb_points_2014.csv', 'team_offense_2014.csv' )
 
-#grab_data()
-#names, features, X_train, y_train = load_data('qb_points_2015.csv', 'qb_points_2016.csv', 'team_offense_2015.csv')
-#X_tmp, y_test, names = load_test('qb_points_2014.csv', 'team_offense_2014.csv')
+def crawl(team, year, url, header, get_header=True):
+	source_code = requests.get(url)  # connects to url and stores info in variable source_code
+	plain_text = source_code.text  # takes text of request and stores it in plain_text (links, images etc.)
+	soup = BeautifulSoup(plain_text, 'html.parser')  # soup object is what you sort through
+	# for each row in the table
+	rows = [year]
+	row_num = 0
+	row_found = False
+	for tr in soup.find_all('tr'):
+		team_found = False
+		# for each entry in a row
+		if not row_found:
+			for td in tr.find_all('td'):
+				# print each entry in that row
+				text = td.text.strip()
+				if row_num == 0 and get_header:
+					if text == 'NON-ADJUSTED':
+						non_adj = ['Non-adj total', 'Non-adj Pass', 'Non-adj Rush']
+						header.extend(non_adj)
+					else:
+						if text != '' and text.lower() != 'team':
+							header.append(text.title())
+				if text == team:
+					team_found = True
+					continue
+				if team_found:
+					text = filter(text)
+					rows.append(text)
+		if team_found:
+			row_found = True
+		row_num += 1
+	return header, rows
 
+
+def filter(text):
+	text = re.sub("[\(\[].*?[\)\]]", "", text).strip()
+	if ":" in text:
+		text = text.replace(":", ".")
+		tmp = text.split('.')
+		val = (int(tmp[0]) * 60) + int(tmp[1])
+		text = float(val)
+	elif "%" in text:
+		text = text.replace("%", "")
+		text = float(text) / 100
+	text = float(text)
+	return round(text, 3)
+
+
+def fill(df, url):
+	data = []
+	header = ['Season']
+	i = 0
+	get_header = True
+	for index, row in df.iterrows():
+		if i != 0:
+			get_header = False
+		tmp_url = '{}{}'.format(url, row['Season'])
+		header, year = crawl(row['Team'], row['Season'], tmp_url, header, get_header)
+		data.append(year)
+		i = 1
+	df = pd.DataFrame(data, columns=header)
+	return df
+
+def merge(file):
+	df = pd.read_csv(file)
+	seasons = df['Season']
+	data_frames = []
+	for url in urls:
+		d = fill(df, url)
+		data_frames.append(d)
+
+	df1 = pd.merge(data_frames[0], data_frames[1], on='Season')
+
+	tmp = ['Season', 'Fantasy Points']
+	tmp_df = pd.DataFrame(df[tmp])
+
+	df = df.drop('Fantasy Points', axis=1)
+	df = pd.merge(df, df1, on='Season')
+	df = pd.merge(df, tmp_df, on='Season')
+	df.to_csv('drew_brees_final.csv')
+
+
+#urls = {
+#	'Team Offense': 'http://www.footballoutsiders.com/stats/teamoff',
+#	'Offense Drive': 'http://www.footballoutsiders.com/stats/drivestatsoff',
+#}
+
+urls = ['http://www.footballoutsiders.com/stats/teamoff', 'http://www.footballoutsiders.com/stats/drivestatsoff']
+#url = 'https://fantasydata.com/nfl-stats/player-details.aspx?playerid=7242-drew-brees-new-orleans-saints'
+output_file = 'player_data/QB/drew_brees.csv'
+#grab_data(url, output_file)
+
+merge(output_file)
+
+#header, row = crawl('NO', 'http://www.footballoutsiders.com/stats/teamoff2001')
+
+
+'''
 X_train, y_train, train_names = load_file('data.csv')
 X_test, y_test, test_names = load_file('test_data_2014.csv')
-
-#X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-#X_train_scaled = scaler.fit_transform(X_train)
-#X_test_scaled = scaler.fit_transform(X_test)
 
 players = get_raw('test_data_2014.csv')
 
@@ -236,3 +250,4 @@ for model in models:
 		print("{} actual: {} || model {} prediction: {}".format(row['Player'], row['Fantasy Points'], i, model.predict(player)))
 	i += 1
 scores()
+'''
