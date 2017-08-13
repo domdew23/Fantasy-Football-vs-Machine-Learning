@@ -10,8 +10,6 @@ from bs4 import BeautifulSoup
 from sklearn.preprocessing import Normalizer
 from sklearn.neural_network import MLPRegressor
 from sklearn.svm import LinearSVR, SVR, NuSVR
-from rauth import OAuth1Service
-import http.client, urllib.request, urllib.parse, urllib.error, base64
 import re
 
 def print_scores(model, model_type=''):
@@ -96,9 +94,9 @@ def make_models(X_train, y_train):
 	lasso001 = Lasso(alpha=.01, max_iter=1000000).fit(X_train, y_train)
 	lasso00001 = Lasso(alpha=.0001, max_iter=1000000).fit(X_train, y_train)
 
-	svr = SVR(C=100).fit(X_train, y_train)
-	lin_svr = LinearSVR(C=100).fit(X_train, y_train)
-	nu_svr = NuSVR(C=100).fit(X_train, y_train)
+	svr = SVR(C=1, max_iter=1000000).fit(X_train, y_train)
+	lin_svr = LinearSVR(C=10, max_iter=1000000).fit(X_train, y_train)
+	nu_svr = NuSVR(C=10, max_iter=1000000).fit(X_train, y_train)
 
 	return lr, ridge, ridge10, ridge01, lasso, lasso001, lasso00001, svr, lin_svr, nu_svr
 
@@ -185,7 +183,8 @@ def filter(text):
 
 
 def fill(df, url):
-	data = []
+	train_data = []
+	predict_data = []
 	header = ['Season']
 	i = 0
 	get_header = True
@@ -194,10 +193,11 @@ def fill(df, url):
 			get_header = False
 		tmp_url = '{}{}'.format(url, row['Season'])
 		header, year = crawl(row['Team'], row['Season'], tmp_url, header, get_header)
-		data.append(year)
+		train_data.append(year)
 		i = 1
-	df = pd.DataFrame(data, columns=header)
+	df = pd.DataFrame(train_data, columns=header)
 	return df
+
 
 def merge(file):
 	df = pd.read_csv(file)
@@ -218,21 +218,64 @@ def merge(file):
 	df.to_csv('drew_brees_final.csv')
 
 
-#urls = {
-#	'Team Offense': 'http://www.footballoutsiders.com/stats/teamoff',
-#	'Offense Drive': 'http://www.footballoutsiders.com/stats/drivestatsoff',
-#}
+def load_player(file):
+	df = pd.read_csv(file)
+
+	name = str(df['Player'][0])
+	predict = df.loc[[0]]
+
+	targets = df['Fantasy Points']
+	targets.drop(targets.index[[-1]], inplace=True)
+
+	df.drop(0, inplace=True)
+	df.drop('Fantasy Points', axis=1, inplace=True)
+	predict.drop('Fantasy Points', axis=1, inplace=True)
+	df.reset_index(drop=True, inplace=True)
+	cols = [1,2,3]
+
+	df.drop(df.columns[cols], axis=1, inplace=True)
+	predict.drop(predict.columns[cols], axis=1, inplace=True)
+	#df['Fantasy Points'] = targets
+	return df, targets, name, predict
+
 
 urls = ['http://www.footballoutsiders.com/stats/teamoff', 'http://www.footballoutsiders.com/stats/drivestatsoff']
 #url = 'https://fantasydata.com/nfl-stats/player-details.aspx?playerid=7242-drew-brees-new-orleans-saints'
 output_file = 'player_data/QB/drew_brees.csv'
 #grab_data(url, output_file)
 
-merge(output_file)
+#merge(output_file)
+X, y, name, predict = load_player('drew_brees_final.csv')
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-#header, row = crawl('NO', 'http://www.footballoutsiders.com/stats/teamoff2001')
+#test_years = list(X_test['Season'])
+#X_test.drop('Season', axis=1, inplace=True)
+#X_train.drop('Season', axis=1, inplace=True)
 
+lr, ridge, ridge10, ridge01, lasso, lasso001, lasso00001, svr, lin_svr, nu_svr = make_models(X_train, y_train)
+models = [lr, ridge, ridge10, ridge01, lasso, lasso001, lasso00001, svr, lin_svr, nu_svr]
 
+tmp = ['%.2f' % x for x in y_test]
+
+i = 0
+for m in models:
+	diffs = []
+	predictions = m.predict(X_test)
+	predictions = ['%.2f' % x for x in predictions]
+	for pred, actual in zip(predictions, tmp):
+		diff = float(pred) - float(actual)
+		diffs.append(abs(diff))
+	mean = sum(diffs) / len(tmp)
+	print("{} prediction by model {}: {} || mean difference: {} \n\t\t   season actual: {}".format(name, i, predictions, mean, tmp))
+	i += 1
+ 
+#for model in models:
+	#print("{} prediction by model {}: {} || season actual: {}".format(name, i, model.predict(X_test), y_test))
+	#for test, actual in zip(X_test.iterrows(), y_test.iterrows()):
+		#print("{} prediction by model {}: {} || {} season actual: {}".format(name, i, model.predict(test), actual))
+	#print("{} 2017 prediction by model {}: {}".format(name, i, model.predict(predict)))
+
+scores()
 '''
 X_train, y_train, train_names = load_file('data.csv')
 X_test, y_test, test_names = load_file('test_data_2014.csv')
