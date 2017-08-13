@@ -17,7 +17,10 @@ def print_scores(model, model_type=''):
 	test_score = model.score(X_test, y_test)
 	print(model_type + " Training score: {:.2f}".format(train_score))
 	print(model_type + " Testing score: {:.2f}".format(test_score))
-	#print(model_type + " Number of features used: {}".format(np.sum(model.coef_ != 0)))
+	try:
+		print(model_type + " Number of features used: {}".format(np.sum(model.coef_ != 0)))
+	except ValueError:
+		print("All features used")
 	print()
 
 def graph_ridge(ridge, ridge10, ridge01, lr):
@@ -71,34 +74,23 @@ def grab_data(url, output_file):
 
 
 def scores():
-	print_scores(lr,'Linear Regression')
 	print_scores(ridge,'Ridge')
-	print_scores(ridge01,'Ridge 01')
-	print_scores(ridge10,'Ridge 10')
 	print_scores(lasso,'Lasso')
-	print_scores(lasso001,'Lasso 001')
-	print_scores(lasso00001,'Lasso 00001')
 	print_scores(svr,'SVR')
 	print_scores(lin_svr,'LinSVR')
 	print_scores(nu_svr,'NuSVR')
 
 
-
 def make_models(X_train, y_train):
-	lr = LinearRegression().fit(X_train, y_train)
-	ridge = Ridge().fit(X_train, y_train)
-	ridge10 = Ridge(alpha=10, max_iter=1000000).fit(X_train, y_train)
-	ridge01 = Ridge(alpha=.1, max_iter=1000000).fit(X_train, y_train)
 
-	lasso = Lasso().fit(X_train, y_train)
-	lasso001 = Lasso(alpha=.01, max_iter=1000000).fit(X_train, y_train)
-	lasso00001 = Lasso(alpha=.0001, max_iter=1000000).fit(X_train, y_train)
+	ridge = Ridge(alpha=1000, max_iter=1000000, random_state=0).fit(X_train, y_train) # 0 
+	lasso = Lasso(alpha=100, max_iter=1000000, random_state=0).fit(X_train, y_train) # 1
 
-	svr = SVR(C=1, max_iter=1000000).fit(X_train, y_train)
-	lin_svr = LinearSVR(C=10, max_iter=1000000).fit(X_train, y_train)
-	nu_svr = NuSVR(C=10, max_iter=1000000).fit(X_train, y_train)
+	svr = SVR(kernel='linear', C=.01, epsilon=0.1, gamma=7, max_iter=10000, verbose=True).fit(X_train, y_train) # 3
+	lin_svr = LinearSVR(C=.01, epsilon=0.0001, max_iter=10000, verbose=0, random_state=0).fit(X_train, y_train) # 4
+	nu_svr = NuSVR(C=.1, gamma=7, verbose=True).fit(X_train, y_train) # 9
 
-	return lr, ridge, ridge10, ridge01, lasso, lasso001, lasso00001, svr, lin_svr, nu_svr
+	return ridge, lasso, svr, lin_svr, nu_svr
 
 
 def load_file(file):
@@ -248,12 +240,9 @@ output_file = 'player_data/QB/drew_brees.csv'
 X, y, name, predict = load_player('drew_brees_final.csv')
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-#test_years = list(X_test['Season'])
-#X_test.drop('Season', axis=1, inplace=True)
-#X_train.drop('Season', axis=1, inplace=True)
 
-lr, ridge, ridge10, ridge01, lasso, lasso001, lasso00001, svr, lin_svr, nu_svr = make_models(X_train, y_train)
-models = [lr, ridge, ridge10, ridge01, lasso, lasso001, lasso00001, svr, lin_svr, nu_svr]
+ridge, lasso, svr, lin_svr, nu_svr = make_models(X_train, y_train)
+models = [ridge, lasso, svr, lin_svr, nu_svr]
 
 tmp = ['%.2f' % x for x in y_test]
 
@@ -269,12 +258,6 @@ for m in models:
 	print("{} prediction by model {}: {} || mean difference: {} \n\t\t   season actual: {}".format(name, i, predictions, mean, tmp))
 	i += 1
  
-#for model in models:
-	#print("{} prediction by model {}: {} || season actual: {}".format(name, i, model.predict(X_test), y_test))
-	#for test, actual in zip(X_test.iterrows(), y_test.iterrows()):
-		#print("{} prediction by model {}: {} || {} season actual: {}".format(name, i, model.predict(test), actual))
-	#print("{} 2017 prediction by model {}: {}".format(name, i, model.predict(predict)))
-
 scores()
 '''
 X_train, y_train, train_names = load_file('data.csv')
