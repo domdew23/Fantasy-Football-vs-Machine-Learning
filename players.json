@@ -1,0 +1,204 @@
+{
+    "players": [
+        {
+            "name": "aaron-rodgers",
+            "id": "2593"
+        },
+        {
+            "name": "matt-ryan",
+            "id": "732"
+        },
+        {
+            "name": "drew-brees",
+            "id": "7242"
+        },
+        {
+            "name": "andrew-luck",
+            "id": "14008"
+        },
+        {
+            "name": "kirk-cousins",
+            "id": "14252"
+        },
+        {
+            "name": "dak-prescott",
+            "id": "18055"
+        },
+        {
+            "name": "matthew-stafford",
+            "id": "9038"
+        },
+        {
+            "name": "blake-bortles",
+            "id": "16245"
+        },
+        {
+            "name": "russell-wilson",
+            "id": "14536"
+        },
+        {
+            "name": "philip-rivers",
+            "id": "8244"
+        },
+        {
+            "name": "tyrod-taylor",
+            "id": "12831"
+        },
+        {
+            "name": "jameis-winston",
+            "id": "16762"
+        },
+        {
+            "name": "derek-carr",
+            "id": "16311"
+        },
+        {
+            "name": "marcus-mariota",
+            "id": "16763"
+        },
+        {
+            "name": "andy-dalton",
+            "id": "12841"
+        },
+        {
+            "name": "cam-newton",
+            "id": "13320"
+        },
+        {
+            "name": "ben-roethlisberger",
+            "id": "3807"
+        },
+        {
+            "name": "tom-brady",
+            "id": "4314"
+        },
+        {
+            "name": "joe-flacco",
+            "id": "611"
+        },
+        {
+            "name": "carson-palmer",
+            "id": "2428"
+        },
+        {
+            "name": "eli-manning",
+            "id": "4932"
+        },
+        {
+            "name": "alex-smith",
+            "id": "6739"
+        },
+        {
+            "name": "carson-wentz",
+            "id": "17920"
+        },
+        {
+            "name": "sam-bradford",
+            "id": "11527"
+        },
+        {
+            "name": "colin-kaepernick",
+            "id": "13443"
+        },
+        {
+            "name": "ryan-tannehill",
+            "id": "13799"
+        },
+        {
+            "name": "trevor-siemian",
+            "id": "17009"
+        },
+        {
+            "name": "brock-osweiler",
+            "id": "14053"
+        },
+        {
+            "name": "ryan-fitzpatrick",
+            "id": "8283"
+        },
+        {
+            "name": "case-keenum",
+            "id": "15694"
+        },
+        {
+            "name": "matt-barkley",
+            "id": "14855"
+        },
+        {
+            "name": "brian-hoyer",
+            "id": "8358"
+        },
+        {
+            "name": "blaine-gabbert",
+            "id": "12982"
+        },
+        {
+            "name": "cody-kessler",
+            "id": "17966"
+        },
+        {
+            "name": "robert-griffiniii",
+            "id": "14257"
+        },
+        {
+            "name": "jared-goff",
+            "id": "17922"
+        },
+        {
+            "name": "josh-mccown",
+            "id": "5282"
+        },
+        {
+            "name": "matt-moore",
+            "id": "5834"
+        },
+        {
+            "name": "jay-cutler",
+            "id": "8972"
+        },
+        {
+            "name": "bryce-petty",
+            "id": "16864"
+        },
+        {
+            "name": "landry-jones",
+            "id": "14971"
+        },
+        {
+            "name": "jimmy-garoppolo",
+            "id": "16041"
+        },
+        {
+            "name": "paxton-lynch",
+            "id": "17929"
+        },
+        {
+            "name": "jacoby-brissett",
+            "id": "18018"
+        },
+        {
+            "name": "nick-foles",
+            "id": "13723"
+        },
+        {
+            "name": "derek-anderson",
+            "id": "12083"
+        },
+        {
+            "name": "kevin-hogan",
+            "id": "18079"
+        },
+        {
+            "name": "matt-cassel",
+            "id": "8723"
+        },
+        {
+            "name": "tom-savage",
+            "id": "16211"
+        },
+        {
+            "name": "drew-stanton",
+            "id": "4737"
+        }
+    ]
+}

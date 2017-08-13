@@ -11,6 +11,7 @@ from sklearn.preprocessing import Normalizer
 from sklearn.neural_network import MLPRegressor
 from sklearn.svm import LinearSVR, SVR, NuSVR
 import re
+import json
 
 def print_scores(model, model_type=''):
 	train_score = model.score(X_train, y_train)
@@ -42,27 +43,22 @@ def spider(url, file):
 	plain_text = source_code.text  # takes text of request and stores it in plain_text (links, images etc.)
 	soup = BeautifulSoup(plain_text, 'html.parser')  # soup object is what you sort through
 	# for each row in the table
-	for th in soup.find_all('th'):
-		text = th.text
-		fw.write(text + ',')
-		print(th.string, '', end='')
-	fw.write('\n')
 	count = 0
-	for tr in soup.find_all('tr'):
+	for table in soup.find_all('table'):
 		count += 1
-		if not tr:
-			continue
-		# for each entry in a row
-		for td in tr.find_all('td'):
-			if not td:
-				continue
-			# print each entry in that row
-			text = td.text
-			text = text.replace(',', '')
-			fw.write(text + ',')
-			print(td.string, '', end='')
-		fw.write('\n')
-		print('')
+		if count == 2:
+			for th in table.find_all('th'):
+				head_text = th.text
+				head_text = head_text.replace(',', '')
+				fw.write(head_text + ',')
+			for tr in table.find_all('tr'):
+				for td in tr.find_all('td'):
+					text = td.text
+					text = text.replace(',', '')
+					fw.write(text + ',')
+					print(text, '', end='')
+				print()
+				fw.write('\n')
 	fw.close()
 
 
@@ -207,7 +203,7 @@ def merge(file):
 	df = df.drop('Fantasy Points', axis=1)
 	df = pd.merge(df, df1, on='Season')
 	df = pd.merge(df, tmp_df, on='Season')
-	df.to_csv('drew_brees_final.csv')
+	df.to_csv(file)
 
 
 def load_player(file):
@@ -231,10 +227,58 @@ def load_player(file):
 	return df, targets, name, predict
 
 
+def format_name(name):
+	name = name.lower()
+	name = name.split(' ')
+	name.insert(1, '-')
+	name = ''.join(name)
+	return name
+
+
+def save_players(url, file):
+	if os.path.isfile(file):
+		print("File already exists")
+		return
+	source_code = requests.get(url)  # connects to url and stores info in variable source_code
+	plain_text = source_code.text  # takes text of request and stores it in plain_text (links, images etc.)
+	soup = BeautifulSoup(plain_text, 'html.parser')  # soup object is what you sort through
+	data = {}
+	# for each row in the table
+	for tr in soup.find_all('tr'):
+		count = 0
+		player = {}
+		for td in tr.find_all('td'):
+			if count == 1:
+				player_id = td.text.strip()
+				player['id'] = player_id
+			elif count == 2:
+				player_name = format_name(td.text.strip())
+				player['name'] = player_name
+				break
+			count += 1
+		if not data:
+			if player:
+				data['players'] = [player]
+		else:
+			data['players'].append(player)
+	with open(file, 'w') as f:
+		json.dump(data, f, indent=4)
+
+
+def get_data(file):
+	with open(file, 'r') as f:
+		data = json.load(f)
+	for player in data['players']:
+		player_id = player['id']
+		name = player['name']
+		link = 'https://fantasydata.com/nfl-stats/player-details.aspx?playerid={}-{}'.format(player_id, name)
+		grab_data(link, 'player_data/QB/{}.csv'.format(name))
+
+get_data('players.json')
+#link = 'https://fantasydata.com/nfl-stats/nfl-fantasy-football-stats.aspx?fs=4&stype=0&sn=1&scope=0&w=0&ew=0&s=&t=0&p=2&st=FantasyPointsYahoo&d=1&ls=FantasyPointsYahoo&live=false&pid=true&minsnaps=4'
+#save_players(link, 'players.json')
+
 urls = ['http://www.footballoutsiders.com/stats/teamoff', 'http://www.footballoutsiders.com/stats/drivestatsoff']
-#url = 'https://fantasydata.com/nfl-stats/player-details.aspx?playerid=7242-drew-brees-new-orleans-saints'
-output_file = 'player_data/QB/drew_brees.csv'
-#grab_data(url, output_file)
 
 #merge(output_file)
 X, y, name, predict = load_player('drew_brees_final.csv')
