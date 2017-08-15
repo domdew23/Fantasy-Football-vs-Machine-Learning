@@ -2,13 +2,11 @@ import numpy as np
 import pandas as pd 
 import os
 import matplotlib.pyplot as plt
-from sklearn.tree import DecisionTreeRegressor
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.model_selection import train_test_split
 import requests
 from bs4 import BeautifulSoup
 from sklearn.preprocessing import Normalizer
-from sklearn.neural_network import MLPRegressor
 from sklearn.svm import LinearSVR, SVR, NuSVR
 import re
 import json
@@ -24,15 +22,15 @@ def print_scores(model, model_type=''):
 		print("All features used")
 	print()
 
-def graph_ridge(ridge, ridge10, ridge01, lr):
-	plt.plot(ridge.coef_, 's', label='Ridge alpha=1')
-	plt.plot(ridge10.coef_, '^', label='Ridge alpha=10')
-	plt.plot(ridge01.coef_, 'v', label='Ridge alpha=.1')
+def graph_ridge(ridge, lasso, svr, lin_svr):
+	plt.plot(ridge.coef_, 's', label='Ridge')
+	plt.plot(lasso.coef_, '^', label='Lasso')
+	#plt.plot(svr.coef_, 'v', label='SVR')
+	plt.plot(lin_svr.coef_, 'o', label='Linear SVR')
 
-	plt.plot(lr.coef_, 'o', label='Linear Regression')
 	plt.xlabel("Coefficient index")
 	plt.ylabel("Coefficent magnitude")
-	plt.hlines(0, 0, len(lr.coef_))
+	plt.hlines(0, 0, len(svr.coef_))
 	plt.legend()
 	plt.show()
 
@@ -303,6 +301,7 @@ for m in models:
 	i += 1
  
 scores()
+graph_ridge(ridge, lasso, svr, lin_svr)
 '''
 X_train, y_train, train_names = load_file('data.csv')
 X_test, y_test, test_names = load_file('test_data_2014.csv')
